@@ -61,6 +61,23 @@ JNIEXPORT void JNICALL Java_com_arthenica_ffmpegkit_FFmpegKitConfig_enableNative
  */
 JNIEXPORT void JNICALL Java_com_arthenica_ffmpegkit_FFmpegKitConfig_disableNativeRedirection(JNIEnv *, jclass);
 
+/**
+ * Enables Frame Sync Callback.
+ *
+ * @param env pointer to native method interface
+ * @param object reference to the class on which this method is invoked
+ */
+JNIEXPORT void JNICALL Java_com_arthenica_ffmpegkit_FFmpegKitConfig_enableNativeFrameSyncCallback(JNIEnv *, jclass);
+
+/**
+ * Disables Frame Sync Callback.
+ *
+ * @param env pointer to native method interface
+ * @param object reference to the class on which this method is invoked
+ */
+JNIEXPORT void JNICALL Java_com_arthenica_ffmpegkit_FFmpegKitConfig_disableNativeFrameSyncCallback(JNIEnv *, jclass);
+
+
 /*
  * Class:     com_arthenica_ffmpegkit_FFmpegKitConfig
  * Method:    setNativeLogLevel

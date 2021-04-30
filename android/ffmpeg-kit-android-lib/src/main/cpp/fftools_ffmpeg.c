@@ -195,6 +195,7 @@ __thread int first_report = 1;
 __thread int qp_histogram[52];
 
 void (*report_callback)(int, float, float, int64_t, int, double, double) = NULL;
+void (*frame_sync_callback)(int, int, int) = NULL;
 
 extern __thread int file_overwrite;
 extern __thread int no_file_overwrite;
@@ -4909,6 +4910,10 @@ static int transcode_step(void)
         return 0;
     }
 
+    if (frame_sync_callback != NULL) {
+        frame_sync_callback(ost->frame_number - 1, ret, ret == AVERROR_EOF ? 1 : 0);
+    }
+
     if (ret < 0)
         return ret == AVERROR_EOF ? 0 : ret;
 
@@ -5149,6 +5154,11 @@ void ffmpeg_var_cleanup() {
 void set_report_callback(void (*callback)(int, float, float, int64_t, int, double, double))
 {
     report_callback = callback;
+}
+
+void set_frame_sync_callback(void (*callback)(int, int, int))
+{
+    frame_sync_callback = callback;
 }
 
 void cancel_operation(long id)

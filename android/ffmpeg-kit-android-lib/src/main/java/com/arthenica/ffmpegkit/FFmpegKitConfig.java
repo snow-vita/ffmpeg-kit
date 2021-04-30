@@ -83,6 +83,7 @@ public class FFmpegKitConfig {
     private static ExecuteCallback globalExecuteCallbackFunction;
     private static final SparseArray<ParcelFileDescriptor> pfdMap;
     private static LogRedirectionStrategy globalLogRedirectionStrategy;
+    private static FrameSyncCallback frameSyncCallbackFunction;
 
     static {
 
@@ -159,6 +160,10 @@ public class FFmpegKitConfig {
      */
     public static void disableRedirection() {
         disableNativeRedirection();
+    }
+
+    public static void disableFrameSyncCallback() {
+        disableNativeFrameSyncCallback();
     }
 
     /**
@@ -791,6 +796,11 @@ public class FFmpegKitConfig {
         globalStatisticsCallbackFunction = statisticsCallback;
     }
 
+    public static void enableFrameSyncCallback(final FrameSyncCallback frameSyncCallback) {
+        frameSyncCallbackFunction = frameSyncCallback;
+        enableNativeFrameSyncCallback();
+    }
+
     /**
      * <p>Sets a global callback function to receive execution results.
      *
@@ -828,6 +838,16 @@ public class FFmpegKitConfig {
         if (level != null) {
             activeLogLevel = level;
             setNativeLogLevel(level.getValue());
+        }
+    }
+
+    private static void frameSync(final int frameIndex, final int ret, final int eof) {
+        if (frameSyncCallbackFunction != null) {
+            try {
+                frameSyncCallbackFunction.apply(frameIndex, ret, eof);
+            } catch (final Exception e) {
+                android.util.Log.e(FFmpegKitConfig.TAG, String.format("Exception thrown inside FrameSyncCallback block.%s", Exceptions.getStackTraceString(e)));
+            }
         }
     }
 
@@ -1112,6 +1132,10 @@ public class FFmpegKitConfig {
      * <p>Disables redirection natively.
      */
     private static native void disableNativeRedirection();
+
+    private static native void enableNativeFrameSyncCallback();
+
+    private static native void disableNativeFrameSyncCallback();
 
     /**
      * Returns native log level.

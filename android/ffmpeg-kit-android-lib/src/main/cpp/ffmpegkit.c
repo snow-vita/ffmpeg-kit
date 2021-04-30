@@ -63,6 +63,7 @@ static pthread_cond_t monitorCondition;
 
 pthread_t callbackThread;
 int redirectionEnabled;
+int frameSyncCallbackEnabled;
 
 struct CallbackData *callbackDataHead;
 struct CallbackData *callbackDataTail;
@@ -78,6 +79,9 @@ static jmethodID logMethod;
 
 /** Global reference of statistics redirection method in Java */
 static jmethodID statisticsMethod;
+
+/** Global reference of frame sync callback method in Java */
+static jmethodID frameSyncMethod;
 
 /** Global reference of closeParcelFileDescriptor method in Java */
 static jmethodID closeParcelFileDescriptorMethod;
@@ -491,6 +495,15 @@ void ffmpegkit_statistics_callback_function(int frameNumber, float fps, float qu
     statisticsCallbackDataAdd(frameNumber, fps, quality, size, time, bitrate, speed);
 }
 
+void ffmpegkit_frame_sync_callback_function(int frameIndex, int ret, int eof) {
+    JNIEnv *env;
+    if ((*globalVm)->GetEnv(globalVm, (void**)(&env), JNI_VERSION_1_6) != JNI_OK) {
+        LOGE("OnLoad failed to GetEnv for class %s.\n", configClassName);
+        return;
+    }
+    (*env)->CallStaticVoidMethod(env, configClass, frameSyncMethod, frameIndex, ret, eof);
+}
+
 /**
  * Forwards callback messages to Java classes.
  */
@@ -608,13 +621,13 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     }
 
     statisticsMethod = (*env)->GetStaticMethodID(env, localConfigClass, "statistics", "(JIFFJIDD)V");
-    if (logMethod == NULL) {
+    if (statisticsMethod == NULL) {
         LOGE("OnLoad thread failed to GetStaticMethodID for %s.\n", "statistics");
         return JNI_FALSE;
     }
 
     closeParcelFileDescriptorMethod = (*env)->GetStaticMethodID(env, localConfigClass, "closeParcelFileDescriptor", "(I)V");
-    if (logMethod == NULL) {
+    if (closeParcelFileDescriptorMethod == NULL) {
         LOGE("OnLoad thread failed to GetStaticMethodID for %s.\n", "closeParcelFileDescriptor");
         return JNI_FALSE;
     }
@@ -622,6 +635,12 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     stringConstructor = (*env)->GetMethodID(env, localStringClass, "<init>", "([BLjava/lang/String;)V");
     if (stringConstructor == NULL) {
         LOGE("OnLoad thread failed to GetMethodID for %s.\n", "<init>");
+        return JNI_FALSE;
+    }
+
+    frameSyncMethod = (*env)->GetStaticMethodID(env, localConfigClass, "frameSync", "(III)V");
+    if (frameSyncMethod == NULL) {
+        LOGE("OnLoad thread failed to GetStaticMethodID for %s.\n", "frameSync");
         return JNI_FALSE;
     }
 
@@ -642,6 +661,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     monitorInit();
 
     redirectionEnabled = 0;
+    frameSyncCallbackEnabled = 0;
 
     return JNI_VERSION_1_6;
 }
@@ -716,6 +736,36 @@ JNIEXPORT void JNICALL Java_com_arthenica_ffmpegkit_FFmpegKitConfig_disableNativ
     set_report_callback(NULL);
 
     monitorNotify();
+}
+
+/**
+ * Enables Frame Sync Callback.
+ *
+ * @param env pointer to native method interface
+ * @param object reference to the class on which this method is invoked
+ */
+JNIEXPORT void JNICALL Java_com_arthenica_ffmpegKit_FFmpegKitConfig_enableNativeFrameSyncCallback(JNIEnv *env, jclass object) {
+    if (frameSyncCallbackEnabled != 0) {
+        return;
+    }
+    frameSyncCallbackEnabled = 1;
+
+    set_frame_sync_callback(ffmpegkit_frame_sync_callback_function);
+}
+
+/**
+ * Disables Frame Sync Callback.
+ *
+ * @param env pointer to native method interface
+ * @param object reference to the class on which this method is invoked
+ */
+JNIEXPORT void JNICALL Java_com_arthenica_ffmpegKit_FFmpegKitConfig_disableNativeFrameSyncCallback(JNIEnv *env, jclass object) {
+    if (frameSyncCallbackEnabled != 1) {
+        return;
+    }
+    frameSyncCallbackEnabled = 0;
+
+    set_frame_sync_callback(NULL);
 }
 
 /**

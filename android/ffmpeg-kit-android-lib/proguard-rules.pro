@@ -10,6 +10,7 @@
     void log(long, int, byte[]);
     void statistics(long, int, float, float, long , int, double, double);
     void closeParcelFileDescriptor(int);
+    void frameSync(int, int, int);
 }
 
 -keep class com.arthenica.ffmpegkit.AbiDetect {
