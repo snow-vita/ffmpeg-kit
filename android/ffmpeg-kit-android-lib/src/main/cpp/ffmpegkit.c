@@ -116,6 +116,8 @@ int configuredLogLevel = AV_LOG_INFO;
 JNINativeMethod configMethods[] = {
     {"enableNativeRedirection", "()V", (void*) Java_com_arthenica_ffmpegkit_FFmpegKitConfig_enableNativeRedirection},
     {"disableNativeRedirection", "()V", (void*) Java_com_arthenica_ffmpegkit_FFmpegKitConfig_disableNativeRedirection},
+    {"enableNativeFrameSyncCallback", "()V", (void*) Java_com_arthenica_ffmpegkit_FFmpegKitConfig_enableNativeFrameSyncCallback},
+    {"disableNativeFrameSyncCallback", "()V", (void*) Java_com_arthenica_ffmpegkit_FFmpegKitConfig_disableNativeFrameSyncCallback},
     {"setNativeLogLevel", "(I)V", (void*) Java_com_arthenica_ffmpegkit_FFmpegKitConfig_setNativeLogLevel},
     {"getNativeLogLevel", "()I", (void*) Java_com_arthenica_ffmpegkit_FFmpegKitConfig_getNativeLogLevel},
     {"getNativeFFmpegVersion", "()Ljava/lang/String;", (void*) Java_com_arthenica_ffmpegkit_FFmpegKitConfig_getNativeFFmpegVersion},
@@ -603,7 +605,7 @@ jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         return JNI_FALSE;
     }
 
-    if ((*env)->RegisterNatives(env, localConfigClass, configMethods, 14) < 0) {
+    if ((*env)->RegisterNatives(env, localConfigClass, configMethods, 16) < 0) {
         LOGE("OnLoad failed to RegisterNatives for class %s.\n", configClassName);
         return JNI_FALSE;
     }
@@ -748,7 +750,7 @@ JNIEXPORT void JNICALL Java_com_arthenica_ffmpegkit_FFmpegKitConfig_disableNativ
  * @param env pointer to native method interface
  * @param object reference to the class on which this method is invoked
  */
-JNIEXPORT void JNICALL Java_com_arthenica_ffmpegKit_FFmpegKitConfig_enableNativeFrameSyncCallback(JNIEnv *env, jclass object) {
+JNIEXPORT void JNICALL Java_com_arthenica_ffmpegkit_FFmpegKitConfig_enableNativeFrameSyncCallback(JNIEnv *env, jclass object) {
     if (frameSyncCallbackEnabled != 0) {
         return;
     }
@@ -763,7 +765,7 @@ JNIEXPORT void JNICALL Java_com_arthenica_ffmpegKit_FFmpegKitConfig_enableNative
  * @param env pointer to native method interface
  * @param object reference to the class on which this method is invoked
  */
-JNIEXPORT void JNICALL Java_com_arthenica_ffmpegKit_FFmpegKitConfig_disableNativeFrameSyncCallback(JNIEnv *env, jclass object) {
+JNIEXPORT void JNICALL Java_com_arthenica_ffmpegkit_FFmpegKitConfig_disableNativeFrameSyncCallback(JNIEnv *env, jclass object) {
     if (frameSyncCallbackEnabled != 1) {
         return;
     }
